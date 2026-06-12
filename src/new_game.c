@@ -98,6 +98,7 @@ static void SetDefaultOptions(void)
     gSaveBlock2Ptr->regionMapZoom = FALSE;
     gSaveBlock2Ptr->optionsModernExpShare = FALSE;
     gSaveBlock2Ptr->optionsInfiniteTMs = FALSE;
+    gSaveBlock2Ptr->optionsEventTickets = FALSE;
 }
 
 static void ClearPokedexFlags(void)

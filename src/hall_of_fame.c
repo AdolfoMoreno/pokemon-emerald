@@ -1,5 +1,6 @@
 #include "global.h"
 #include "hall_of_fame.h"
+#include "item.h"
 #include "task.h"
 #include "palette.h"
 #include "sprite.h"
@@ -19,6 +20,7 @@
 #include "credits.h"
 #include "bg.h"
 #include "constants/game_stat.h"
+#include "constants/flags.h"
 #include "util.h"
 #include "string_util.h"
 #include "m4a.h"
@@ -36,6 +38,7 @@
 #include "constants/rgb.h"
 
 #define HALL_OF_FAME_MAX_TEAMS 50
+#define EVENT_TICKET_COUNT 4
 #define TAG_CONFETTI 1001
 
 struct HallofFameMon
@@ -65,12 +68,20 @@ struct HofGfx
 static EWRAM_DATA u32 sHofFadePalettes = 0;
 static EWRAM_DATA struct HallofFameTeam *sHofMonPtr = NULL;
 static EWRAM_DATA struct HofGfx *sHofGfxPtr = NULL;
+static EWRAM_DATA bool8 sWallaceEventTicketRewardPending = FALSE;
+static EWRAM_DATA const u8 *sEventTicketRewardMessage = NULL;
 
 static void ClearVramOamPltt_LoadHofPal(void);
 static void LoadHofGfx(void);
 static void InitHofBgs(void);
 static bool8 CreateHofConfettiSprite(void);
 static void StartCredits(void);
+static const u8 *TryGiveEventTicketReward(void);
+static bool8 HasAllEventTickets(void);
+static bool8 CanFitMissingEventTickets(void);
+static u8 CountFreeKeyItemSlots(void);
+static void AddMissingEventTickets(void);
+static void SetEventTicketDestinationFlags(void);
 static bool8 LoadHofBgs(void);
 static void Task_Hof_InitMonData(u8 taskId);
 static void Task_Hof_InitTeamSaveData(u8 taskId);
@@ -86,6 +97,7 @@ static void Task_Hof_WaitToDisplayPlayer(u8 taskId);
 static void Task_Hof_DisplayPlayer(u8 taskId);
 static void Task_Hof_WaitAndPrintPlayerInfo(u8 taskId);
 static void Task_Hof_ExitOnKeyPressed(u8 taskId);
+static void Task_Hof_WaitEventTicketRewardMessage(u8 taskId);
 static void Task_Hof_HandlePaletteOnExit(u8 taskId);
 static void Task_Hof_HandleExit(u8 taskId);
 static void Task_HofPC_CopySaveData(u8 taskId);
@@ -142,6 +154,14 @@ static const struct WindowTemplate sHof_WindowTemplate = {
     .height = 6,
     .paletteNum = 14,
     .baseBlock = 1
+};
+
+static const u16 sEventTicketItems[EVENT_TICKET_COUNT] =
+{
+    ITEM_AURORA_TICKET,
+    ITEM_MYSTIC_TICKET,
+    ITEM_EON_TICKET,
+    ITEM_OLD_SEA_MAP,
 };
 
 static const u8 sMonInfoTextColors[4] = {TEXT_COLOR_TRANSPARENT, TEXT_COLOR_WHITE, TEXT_COLOR_DARK_GRAY};
@@ -484,6 +504,8 @@ static void Task_Hof_InitTeamSaveData(u8 taskId)
     u16 i;
     struct HallofFameTeam *lastSavedTeam = (struct HallofFameTeam *)(gDecompressionBuffer);
 
+    sEventTicketRewardMessage = TryGiveEventTicketReward();
+
     if (!gHasHallOfFameRecords)
     {
         memset(gDecompressionBuffer, 0, SECTOR_SIZE * NUM_HOF_SECTORS);
@@ -731,6 +753,26 @@ static void Task_Hof_ExitOnKeyPressed(u8 taskId)
 {
     if (JOY_NEW(A_BUTTON))
     {
+        if (sEventTicketRewardMessage != NULL)
+        {
+            DrawDialogueFrame(0, FALSE);
+            AddTextPrinterParameterized2(0, FONT_NORMAL, sEventTicketRewardMessage, GetPlayerTextSpeedDelay(), NULL, TEXT_COLOR_DARK_GRAY, TEXT_COLOR_WHITE, TEXT_COLOR_LIGHT_GRAY);
+            CopyWindowToVram(0, COPYWIN_FULL);
+            gTasks[taskId].func = Task_Hof_WaitEventTicketRewardMessage;
+        }
+        else
+        {
+            FadeOutBGM(4);
+            gTasks[taskId].func = Task_Hof_HandlePaletteOnExit;
+        }
+    }
+}
+
+static void Task_Hof_WaitEventTicketRewardMessage(u8 taskId)
+{
+    if (!IsTextPrinterActive(0) && JOY_NEW(A_BUTTON | B_BUTTON))
+    {
+        sEventTicketRewardMessage = NULL;
         FadeOutBGM(4);
         gTasks[taskId].func = Task_Hof_HandlePaletteOnExit;
     }
@@ -779,6 +821,107 @@ static void Task_Hof_HandleExit(u8 taskId)
 static void StartCredits(void)
 {
     SetMainCallback2(CB2_StartCreditsSequence);
+}
+
+u16 MarkWallaceEventTicketRewardPending(void)
+{
+    sWallaceEventTicketRewardPending = TRUE;
+    return FALSE;
+}
+
+static const u8 *TryGiveEventTicketReward(void)
+{
+    if (!sWallaceEventTicketRewardPending)
+        return NULL;
+
+    sWallaceEventTicketRewardPending = FALSE;
+
+    if (!gSaveBlock2Ptr->optionsEventTickets)
+        return NULL;
+
+    if (FlagGet(FLAG_RECEIVED_ELITE_FOUR_TICKET_REWARDS))
+        return NULL;
+
+    if (HasAllEventTickets())
+    {
+        FlagSet(FLAG_RECEIVED_ELITE_FOUR_TICKET_REWARDS);
+        return NULL;
+    }
+
+    if (!CanFitMissingEventTickets())
+        return gText_EventTicketsBagTooFull;
+
+    AddMissingEventTickets();
+    SetEventTicketDestinationFlags();
+
+    if (HasAllEventTickets())
+        FlagSet(FLAG_RECEIVED_ELITE_FOUR_TICKET_REWARDS);
+
+    return gText_EventTicketsAddedToBag;
+}
+
+static bool8 HasAllEventTickets(void)
+{
+    u8 i;
+
+    for (i = 0; i < EVENT_TICKET_COUNT; i++)
+    {
+        if (!CheckBagHasItem(sEventTicketItems[i], 1))
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
+static bool8 CanFitMissingEventTickets(void)
+{
+    u8 i;
+    u8 missingCount = 0;
+
+    for (i = 0; i < EVENT_TICKET_COUNT; i++)
+    {
+        if (!CheckBagHasItem(sEventTicketItems[i], 1))
+        {
+            if (!CheckBagHasSpace(sEventTicketItems[i], 1))
+                return FALSE;
+            missingCount++;
+        }
+    }
+
+    return CountFreeKeyItemSlots() >= missingCount;
+}
+
+static u8 CountFreeKeyItemSlots(void)
+{
+    u8 i;
+    u8 freeSlots = 0;
+
+    for (i = 0; i < gBagPockets[KEYITEMS_POCKET].capacity; i++)
+    {
+        if (gBagPockets[KEYITEMS_POCKET].itemSlots[i].itemId == ITEM_NONE)
+            freeSlots++;
+    }
+
+    return freeSlots;
+}
+
+static void AddMissingEventTickets(void)
+{
+    u8 i;
+
+    for (i = 0; i < EVENT_TICKET_COUNT; i++)
+    {
+        if (!CheckBagHasItem(sEventTicketItems[i], 1))
+            AddBagItem(sEventTicketItems[i], 1);
+    }
+}
+
+static void SetEventTicketDestinationFlags(void)
+{
+    FlagSet(FLAG_ENABLE_SHIP_BIRTH_ISLAND);
+    FlagSet(FLAG_ENABLE_SHIP_NAVEL_ROCK);
+    FlagSet(FLAG_ENABLE_SHIP_SOUTHERN_ISLAND);
+    FlagSet(FLAG_ENABLE_SHIP_FARAWAY_ISLAND);
 }
 
 #undef tDontSaveData

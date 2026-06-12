@@ -322,6 +322,11 @@ extern const u8 gText_ModernExpShareOff[];
 extern const u8 gText_InfiniteTMs[];
 extern const u8 gText_InfiniteTMsOn[];
 extern const u8 gText_InfiniteTMsOff[];
+extern const u8 gText_EventTickets[];
+extern const u8 gText_EventTicketsOn[];
+extern const u8 gText_EventTicketsOff[];
+extern const u8 gText_EventTicketsAddedToBag[];
+extern const u8 gText_EventTicketsBagTooFull[];
 
 extern const u8 gText_MaleSymbol[];
 extern const u8 gText_FemaleSymbol[];
