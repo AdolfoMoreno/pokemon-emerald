@@ -99,6 +99,7 @@ static void SetDefaultOptions(void)
     gSaveBlock2Ptr->optionsModernExpShare = FALSE;
     gSaveBlock2Ptr->optionsInfiniteTMs = FALSE;
     gSaveBlock2Ptr->optionsEventTickets = FALSE;
+    gSaveBlock2Ptr->optionsBuyableStones = FALSE;
 }
 
 static void ClearPokedexFlags(void)

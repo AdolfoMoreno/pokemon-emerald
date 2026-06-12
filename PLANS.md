@@ -12,6 +12,53 @@ No active feature in SWE Implementation.
 
 # 4. Complete Features
 
+## Feature: Buyable stones
+
+## Approved Branch
+
+- Dedicated feature branch: `feature/lilycove-evolution-stones-vendor`
+
+## Completion Date
+
+- June 12, 2026
+
+## Product Summary
+
+- Added an opt-in settings menu entry labeled `Buyable stones`.
+- The setting offers `ON` and `OFF` values and defaults to `OFF`.
+- The feature applies only to the Lilycove Department Store 2F Right Clerk.
+- With the setting `OFF`, the Right Clerk uses the vanilla inventory and dialogue.
+- With the setting `ON`, the Right Clerk appends `ITEM_SUN_STONE`, `ITEM_MOON_STONE`, `ITEM_FIRE_STONE`, `ITEM_THUNDER_STONE`, `ITEM_WATER_STONE`, and `ITEM_LEAF_STONE` after the vanilla inventory in the approved order.
+- Sun, Fire, Thunder, Water, and Leaf Stones keep their existing `2100` item prices.
+- Moon Stone uses a shop-local `2100` price for this clerk without changing its global item price.
+- No other shops, pickups, item descriptions, marts, or stone availability paths were changed.
+
+## Implementation Summary
+
+- Stored the option in `SaveBlock2` as `optionsBuyableStones` and initialized it to `FALSE` for new saves.
+- Added the `Buyable stones` options-menu row after `Event Tickets` and before `Cancel`.
+- Added option strings and load/save wiring through the existing options-menu flow.
+- Added `IsBuyableStonesEnabled` for script gating.
+- Added `SetLilycoveDeptStore2FRightClerkShopContext` so the shop can apply a local Moon Stone price override only for this clerk.
+- Updated only `LilycoveCity_DepartmentStore_2F_EventScript_ClerkRight` to branch between the vanilla and expanded inventories.
+- Added the expanded Right Clerk inventory with the approved stone order.
+- Routed shop price display, affordability checks, quantity recalculation, and purchase totals through the shop-local price helper.
+
+## Test Summary
+
+- `make -j4` after setting storage/options-menu changes: passed.
+- `make -j4` after shop script, script specials, and Moon Stone shop-price override: passed.
+- Final `make -j4`: passed.
+  - Final memory output: EWRAM `249712 B / 256 KB`, IWRAM `30892 B / 32 KB`, ROM `14929764 B / 32 MB`.
+- `git diff --check`: passed.
+- `git diff -- src/data/items.h`: no diff, confirming global item prices were not changed.
+- Targeted reference scan confirmed `optionsBuyableStones`, the `Buyable stones` options-menu row, default `OFF` initialization, script gating, expanded Right Clerk inventory, approved stone order, and Moon Stone shop-local price helper are present.
+- User manually tested the feature and approved it.
+
+## User Manual Testing Approval Note
+
+- User confirmation: "Tested and approved"
+
 ## Feature: Elite Four Ticket Rewards
 
 ## Approved Branch

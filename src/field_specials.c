@@ -3584,6 +3584,11 @@ void Unused_SetWeatherSunny(void)
     SetCurrentAndNextWeather(WEATHER_SUNNY);
 }
 
+void IsBuyableStonesEnabled(void)
+{
+    gSpecialVar_Result = gSaveBlock2Ptr->optionsBuyableStones;
+}
+
 // All mart employees have a local id of 1, so function always returns 1
 u32 GetMartEmployeeObjectEventId(void)
 {

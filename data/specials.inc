@@ -536,3 +536,5 @@ gSpecials::
 	def_special CloseDeptStoreElevatorWindow
 	def_special TrySetBattleTowerLinkType
 	def_special MarkWallaceEventTicketRewardPending
+	def_special IsBuyableStonesEnabled
+	def_special SetLilycoveDeptStore2FRightClerkShopContext

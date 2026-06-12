@@ -325,6 +325,9 @@ extern const u8 gText_InfiniteTMsOff[];
 extern const u8 gText_EventTickets[];
 extern const u8 gText_EventTicketsOn[];
 extern const u8 gText_EventTicketsOff[];
+extern const u8 gText_BuyableStones[];
+extern const u8 gText_BuyableStonesOn[];
+extern const u8 gText_BuyableStonesOff[];
 extern const u8 gText_EventTicketsAddedToBag[];
 extern const u8 gText_EventTicketsBagTooFull[];
 
