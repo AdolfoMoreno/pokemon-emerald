@@ -88,6 +88,8 @@ enum {
     ACTION_SHOW,
     ACTION_GIVE_FAVOR_LADY,
     ACTION_CONFIRM_QUIZ_LADY,
+    ACTION_TEACH,
+    ACTION_FIELD_USE,
     ACTION_DUMMY,
 };
 
@@ -196,6 +198,7 @@ static void ItemMenu_Register(u8);
 static void ItemMenu_Give(u8);
 static void ItemMenu_Cancel(u8);
 static void ItemMenu_UseInBattle(u8);
+static void ItemMenu_UseHmFieldMove(u8);
 static void ItemMenu_CheckTag(u8);
 static void ItemMenu_Show(u8);
 static void ItemMenu_GiveFavorLady(u8);
@@ -278,6 +281,8 @@ static const struct MenuAction sItemMenuActions[] = {
     [ACTION_SHOW]              = {gMenuText_Show,     {ItemMenu_Show}},
     [ACTION_GIVE_FAVOR_LADY]   = {gMenuText_Give2,    {ItemMenu_GiveFavorLady}},
     [ACTION_CONFIRM_QUIZ_LADY] = {gMenuText_Confirm,  {ItemMenu_ConfirmQuizLady}},
+    [ACTION_TEACH]             = {gMenuText_Teach,    {ItemMenu_UseOutOfBattle}},
+    [ACTION_FIELD_USE]         = {gMenuText_Use,      {ItemMenu_UseHmFieldMove}},
     [ACTION_DUMMY]             = {gText_EmptyString2, {NULL}}
 };
 
@@ -301,6 +306,16 @@ static const u8 sContextMenuItems_BallsPocket[] = {
 static const u8 sContextMenuItems_TmHmPocket[] = {
     ACTION_USE,         ACTION_GIVE,
     ACTION_DUMMY,       ACTION_CANCEL
+};
+
+static const u8 sContextMenuItems_HmPocket[] = {
+    ACTION_TEACH,       ACTION_GIVE,
+    ACTION_DUMMY,       ACTION_CANCEL
+};
+
+static const u8 sContextMenuItems_HmPocketBagOnly[] = {
+    ACTION_TEACH,       ACTION_GIVE,
+    ACTION_FIELD_USE,   ACTION_CANCEL
 };
 
 static const u8 sContextMenuItems_BerriesPocket[] = {
@@ -1629,8 +1644,24 @@ static void OpenContextMenu(u8 taskId)
                 gBagMenu->contextMenuNumItems = ARRAY_COUNT(sContextMenuItems_BallsPocket);
                 break;
             case TMHM_POCKET:
-                gBagMenu->contextMenuItemsPtr = sContextMenuItems_TmHmPocket;
-                gBagMenu->contextMenuNumItems = ARRAY_COUNT(sContextMenuItems_TmHmPocket);
+                if (gSpecialVar_ItemId >= ITEM_HM_CUT && gSpecialVar_ItemId <= ITEM_HM_DIVE)
+                {
+                    if (gBagPosition.location == ITEMMENULOCATION_FIELD && gSaveBlock2Ptr->optionsBagOnlyHMs)
+                    {
+                        gBagMenu->contextMenuItemsPtr = sContextMenuItems_HmPocketBagOnly;
+                        gBagMenu->contextMenuNumItems = ARRAY_COUNT(sContextMenuItems_HmPocketBagOnly);
+                    }
+                    else
+                    {
+                        gBagMenu->contextMenuItemsPtr = sContextMenuItems_HmPocket;
+                        gBagMenu->contextMenuNumItems = ARRAY_COUNT(sContextMenuItems_HmPocket);
+                    }
+                }
+                else
+                {
+                    gBagMenu->contextMenuItemsPtr = sContextMenuItems_TmHmPocket;
+                    gBagMenu->contextMenuNumItems = ARRAY_COUNT(sContextMenuItems_TmHmPocket);
+                }
                 break;
             case BERRIES_POCKET:
                 gBagMenu->contextMenuItemsPtr = sContextMenuItems_BerriesPocket;
@@ -1800,6 +1831,24 @@ static void ItemMenu_UseOutOfBattle(u8 taskId)
             else
                 ItemUseOutOfBattle_Berry(taskId);
         }
+    }
+}
+
+static void ItemMenu_UseHmFieldMove(u8 taskId)
+{
+    const u8 *failureMessage;
+    MainCallback callback;
+
+    RemoveContextWindow();
+    failureMessage = TrySetUpBagHMFieldMove(gSpecialVar_ItemId, &callback);
+    if (failureMessage != NULL)
+    {
+        DisplayItemMessage(taskId, FONT_NORMAL, failureMessage, CloseItemMessage);
+    }
+    else
+    {
+        gBagMenu->newScreenCallback = callback;
+        Task_FadeAndCloseBagMenu(taskId);
     }
 }
 

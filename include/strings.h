@@ -213,6 +213,7 @@ extern const u8 gMenuText_Walk[];
 extern const u8 gMenuText_Deselect[];
 extern const u8 gMenuText_CheckTag[];
 extern const u8 gMenuText_Confirm[];
+extern const u8 gMenuText_Teach[];
 extern const u8 gMenuText_Show[];
 extern const u8 gMenuText_Give2[];
 
@@ -328,6 +329,9 @@ extern const u8 gText_EventTicketsOff[];
 extern const u8 gText_BuyableStones[];
 extern const u8 gText_BuyableStonesOn[];
 extern const u8 gText_BuyableStonesOff[];
+extern const u8 gText_BagOnlyHMs[];
+extern const u8 gText_BagOnlyHMsOn[];
+extern const u8 gText_BagOnlyHMsOff[];
 extern const u8 gText_EventTicketsAddedToBag[];
 extern const u8 gText_EventTicketsBagTooFull[];
 

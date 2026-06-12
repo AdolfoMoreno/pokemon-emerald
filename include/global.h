@@ -526,7 +526,8 @@ struct SaveBlock2
              u16 optionsInfiniteTMs:1; // TMs are not consumed after successful use
              u16 optionsEventTickets:1; // awards event tickets after beating Wallace when enabled
              u16 optionsBuyableStones:1; // adds evolution stones to Lilycove Dept Store 2F Right Clerk
-             //u16 padding2;
+             u16 optionsBagOnlyHMs:1; // allows owned HMs to be used from the Bag when enabled
+             u16 padding2:15;
     /*0x18*/ struct Pokedex pokedex;
     /*0x90*/ u8 filler_90[0x8];
     /*0x98*/ struct Time localTimeOffset;
