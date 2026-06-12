@@ -228,6 +228,8 @@ static EWRAM_DATA u16 *sSlot2TilemapBuffer = 0; //
 EWRAM_DATA u8 gSelectedOrderFromParty[MAX_FRONTIER_PARTY_SIZE] = {0};
 static EWRAM_DATA u16 sPartyMenuItemId = 0;
 static EWRAM_DATA u16 sUnused = 0;
+static EWRAM_DATA bool8 sBagHMFieldMoveActive = FALSE;
+static EWRAM_DATA bool8 sFlyMapOpenedFromBag = FALSE;
 EWRAM_DATA u8 gBattlePartyCurrentOrder[PARTY_SIZE / 2] = {0}; // bits 0-3 are the current pos of Slot 1, 4-7 are Slot 2, and so on
 
 // IWRAM common
@@ -476,6 +478,9 @@ static void CursorCb_Trade1(u8);
 static void CursorCb_Trade2(u8);
 static void CursorCb_Toss(u8);
 static void CursorCb_FieldMove(u8);
+static bool8 TryGetStandardHMFieldMove(u16 itemId, u8 *fieldMove);
+static u8 GetBagHMFieldMoveSourceSlot(void);
+static const u8 *GetBagHMFieldMoveFailureMessage(u8 fieldMove);
 static bool8 SetUpFieldMove_Surf(void);
 static bool8 SetUpFieldMove_Fly(void);
 static bool8 SetUpFieldMove_Waterfall(void);
@@ -3750,6 +3755,7 @@ static void CursorCb_FieldMove(u8 taskId)
                 sPartyMenuInternal->data[0] = fieldMove;
                 break;
             case FIELD_MOVE_FLY:
+                sFlyMapOpenedFromBag = FALSE;
                 gPartyMenu.exitCallback = CB2_OpenFlyMap;
                 Task_ClosePartyMenu(taskId);
                 break;
@@ -3776,6 +3782,124 @@ static void CursorCb_FieldMove(u8 taskId)
             }
             gTasks[taskId].func = Task_CancelAfterAorBPress;
         }
+    }
+}
+
+const u8 *TrySetUpBagHMFieldMove(u16 itemId, MainCallback *callback)
+{
+    u8 fieldMove;
+    u8 sourceSlot;
+    bool8 canUse;
+
+    if (!gSaveBlock2Ptr->optionsBagOnlyHMs || !TryGetStandardHMFieldMove(itemId, &fieldMove))
+        return gText_CantUseHere;
+
+    if (MenuHelpers_IsLinkActive() == TRUE || InUnionRoom() == TRUE)
+        return GetBagHMFieldMoveFailureMessage(fieldMove);
+
+    if (fieldMove <= FIELD_MOVE_WATERFALL && FlagGet(FLAG_BADGE01_GET + fieldMove) != TRUE)
+        return gText_CantUseUntilNewBadge;
+
+    sourceSlot = GetBagHMFieldMoveSourceSlot();
+    if (sourceSlot == PARTY_SIZE)
+        return gText_NoPokemon;
+
+    gPartyMenu.slotId = sourceSlot;
+
+    if (fieldMove == FIELD_MOVE_FLY)
+    {
+        if (SetUpFieldMove_Fly() == TRUE)
+        {
+            sFlyMapOpenedFromBag = TRUE;
+            *callback = CB2_OpenFlyMap;
+            return NULL;
+        }
+        return GetBagHMFieldMoveFailureMessage(fieldMove);
+    }
+
+    sBagHMFieldMoveActive = TRUE;
+    canUse = sFieldMoveCursorCallbacks[fieldMove].fieldMoveFunc();
+    sBagHMFieldMoveActive = FALSE;
+    if (canUse == TRUE)
+    {
+        *callback = CB2_ReturnToField;
+        return NULL;
+    }
+
+    return GetBagHMFieldMoveFailureMessage(fieldMove);
+}
+
+bool8 IsBagHMFieldMoveActive(void)
+{
+    return sBagHMFieldMoveActive;
+}
+
+static bool8 TryGetStandardHMFieldMove(u16 itemId, u8 *fieldMove)
+{
+    switch (itemId)
+    {
+    case ITEM_HM_CUT:
+        *fieldMove = FIELD_MOVE_CUT;
+        return TRUE;
+    case ITEM_HM_FLY:
+        *fieldMove = FIELD_MOVE_FLY;
+        return TRUE;
+    case ITEM_HM_SURF:
+        *fieldMove = FIELD_MOVE_SURF;
+        return TRUE;
+    case ITEM_HM_STRENGTH:
+        *fieldMove = FIELD_MOVE_STRENGTH;
+        return TRUE;
+    case ITEM_HM_FLASH:
+        *fieldMove = FIELD_MOVE_FLASH;
+        return TRUE;
+    case ITEM_HM_ROCK_SMASH:
+        *fieldMove = FIELD_MOVE_ROCK_SMASH;
+        return TRUE;
+    case ITEM_HM_WATERFALL:
+        *fieldMove = FIELD_MOVE_WATERFALL;
+        return TRUE;
+    case ITEM_HM_DIVE:
+        *fieldMove = FIELD_MOVE_DIVE;
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
+static u8 GetBagHMFieldMoveSourceSlot(void)
+{
+    u8 i;
+
+    for (i = 0; i < PARTY_SIZE; i++)
+    {
+        u16 species = GetMonData(&gPlayerParty[i], MON_DATA_SPECIES);
+
+        if (species == SPECIES_NONE)
+            break;
+        if (!GetMonData(&gPlayerParty[i], MON_DATA_IS_EGG))
+            return i;
+    }
+
+    return PARTY_SIZE;
+}
+
+static const u8 *GetBagHMFieldMoveFailureMessage(u8 fieldMove)
+{
+    switch (fieldMove)
+    {
+    case FIELD_MOVE_CUT:
+        return gText_NothingToCut;
+    case FIELD_MOVE_SURF:
+        if (TestPlayerAvatarFlags(PLAYER_AVATAR_FLAG_SURFING))
+            return gText_AlreadySurfing;
+        return gText_CantSurfHere;
+    case FIELD_MOVE_FLASH:
+        if (FlagGet(FLAG_SYS_USE_FLASH) == TRUE)
+            return gText_InUseAlready_PM;
+        return gText_CantUseHere;
+    default:
+        return gText_CantUseHere;
     }
 }
 
@@ -3857,7 +3981,7 @@ static void FieldCallback_Surf(void)
 
 static bool8 SetUpFieldMove_Surf(void)
 {
-    if (PartyHasMonWithSurf() == TRUE && IsPlayerFacingSurfableFishableWater() == TRUE)
+    if ((IsBagHMFieldMoveActive() || PartyHasMonWithSurf() == TRUE) && IsPlayerFacingSurfableFishableWater() == TRUE)
     {
         gFieldCallback2 = FieldCallback_PrepareFadeInFromMenu;
         gPostMenuFieldCallback = FieldCallback_Surf;
@@ -3884,6 +4008,13 @@ static bool8 SetUpFieldMove_Fly(void)
 
 void CB2_ReturnToPartyMenuFromFlyMap(void)
 {
+    if (sFlyMapOpenedFromBag)
+    {
+        sFlyMapOpenedFromBag = FALSE;
+        SetMainCallback2(CB2_ReturnToField);
+        return;
+    }
+
     InitPartyMenu(PARTY_MENU_TYPE_FIELD, PARTY_LAYOUT_SINGLE, PARTY_ACTION_CHOOSE_MON, TRUE, PARTY_MSG_CHOOSE_MON, Task_HandleChooseMonInput, CB2_ReturnToFieldWithOpenMenu);
 }
 

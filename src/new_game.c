@@ -100,6 +100,7 @@ static void SetDefaultOptions(void)
     gSaveBlock2Ptr->optionsInfiniteTMs = FALSE;
     gSaveBlock2Ptr->optionsEventTickets = FALSE;
     gSaveBlock2Ptr->optionsBuyableStones = FALSE;
+    gSaveBlock2Ptr->optionsBagOnlyHMs = FALSE;
 }
 
 static void ClearPokedexFlags(void)

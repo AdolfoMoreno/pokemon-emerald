@@ -12,6 +12,58 @@ No active feature in SWE Implementation.
 
 # 4. Complete Features
 
+## Feature: Bag only HMs
+
+## Approved Branch
+
+- Dedicated feature branch: `feature/hm-bag-use-removable-hms`
+
+## Completion Date
+
+- June 12, 2026
+
+## Product Summary
+
+- Added an opt-in settings menu entry labeled `Bag only HMs`.
+- The setting offers `ON` and `OFF` values and defaults to `OFF`.
+- With the setting `OFF`, current removable-HM baseline behavior is preserved and Bag-based HM field use is unavailable.
+- With the setting `OFF`, HM Bag items use `TEACH` for the existing teaching behavior.
+- With the setting `ON`, owned standard HM items in the Bag can be used for field moves without requiring a compatible Pokemon.
+- With the setting `ON`, HM Bag items show `TEACH`, `GIVE`, `USE`, and `CANCEL` in a 2x2 context menu, with field `USE` below `TEACH`.
+- Bag-based HM use follows the existing badge, map, field, and failure-message checks from normal field-move behavior.
+- HM moves remain teachable to Pokemon in both setting states.
+- Scope is limited to the standard HM moves supported by this project's HM table.
+- Direct overworld prompts remain out of scope and are tracked under `# 5. Future Features`.
+
+## Implementation Summary
+
+- Stored the option in `SaveBlock2` as `optionsBagOnlyHMs` using unused options padding and initialized it to `FALSE` for new saves.
+- Added `Bag only HMs` option-menu strings, declarations, task storage, row placement after `Buyable stones`, load/save behavior, and ON/OFF input/drawing.
+- Added an HM-specific `TEACH` Bag action label so HM teaching no longer appears as generic `USE`.
+- Added the `Bag only HMs = ON` HM context menu layout: `TEACH`, `GIVE`, `USE`, `CANCEL`.
+- Added Bag-based standard HM field-use setup for HM01-HM08, guarded by `optionsBagOnlyHMs`.
+- Reused existing party-menu field-move setup checks for badges, link/Union Room blocking, map/field validation, and failure messages.
+- Used the first non-egg party Pokemon as the field-effect visual source without checking HM compatibility.
+- Bypassed Surf's party-compatibility check only for Bag-based HM use while preserving the water-facing check.
+- Forced Bag-based Cut to use the normal grass radius rather than expanding through `Hyper Cutter`.
+- Added a Fly-map cancel guard so Bag-launched Fly returns to the field instead of the party menu.
+
+## Test Summary
+
+- `make -j4` after setting storage/options-menu/text changes: passed.
+  - Memory output: EWRAM `249712 B / 256 KB`, IWRAM `30892 B / 32 KB`, ROM `14929764 B / 32 MB`.
+- `make -j4` after HM Bag context-menu and Bag field-use changes: passed.
+  - Memory output: EWRAM `249716 B / 256 KB`, IWRAM `30892 B / 32 KB`, ROM `14929764 B / 32 MB`.
+- Final `make -j4`: passed.
+  - Final memory output: EWRAM `249716 B / 256 KB`, IWRAM `30892 B / 32 KB`, ROM `14929764 B / 32 MB`.
+- `git diff --check`: passed.
+- Targeted reference scan confirmed `optionsBagOnlyHMs`, `Bag only HMs`, `TEACH`, HM-only context menus, default `OFF` initialization, Bag HM runtime guards, Fly cancel handling, and Cut normal-radius handling are present.
+- User manually tested the feature and approved it.
+
+## User Manual Testing Approval Note
+
+- User confirmation: "tested and approved"
+
 ## Feature: Buyable stones
 
 ## Approved Branch
@@ -161,3 +213,15 @@ No active feature in SWE Implementation.
 ## User Manual Testing Approval Note
 
 - User confirmation: "Tested, approved"
+
+# 5. Future Features
+
+## Bag only HMs: Overworld Prompt Support
+
+- Add Bag-only HM support to direct overworld prompts for `Surf`.
+- Add Bag-only HM support to direct overworld prompts for `Cut`.
+- Add Bag-only HM support to direct overworld prompts for `Rock Smash`.
+- Add Bag-only HM support to direct overworld prompts for `Strength`.
+- Add Bag-only HM support to direct overworld prompts for `Waterfall`.
+- Add Bag-only HM support to direct overworld prompts for `Dive`.
+- Future work must decide approved prompt text because current scripts buffer a party Pokemon nickname for messages like `{STR_VAR_1} used {STR_VAR_2}!`.
