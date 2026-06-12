@@ -12,6 +12,53 @@ No active feature in SWE Implementation.
 
 # 4. Complete Features
 
+## Feature: Elite Four Ticket Rewards
+
+## Approved Branch
+
+- Dedicated feature branch: `feature/elite-four-ticket-rewards`
+
+## Completion Date
+
+- June 12, 2026
+
+## Product Summary
+
+- Added an opt-in settings menu entry labeled `Event Tickets`.
+- The setting offers `ON` and `OFF` values and defaults to `OFF`.
+- The reward is tied to Wallace's Hall of Fame flow only.
+- With the setting `ON`, beating Wallace grants missing event ticket key items if all missing tickets fit in the bag.
+- With the setting `OFF`, vanilla behavior is preserved and no tickets, reward flags, ship flags, or reward messages are produced.
+- The feature adds only missing tickets and marks the reward claimed once all four target tickets are present.
+- Bag capacity failure adds no tickets, shows the approved failure message, and leaves the reward unclaimed for a future Wallace win.
+- Success and failure messages appear after the Hall of Fame League Champ card acknowledgement and before credits continue.
+
+## Implementation Summary
+
+- Stored the option in `SaveBlock2` as `optionsEventTickets` and initialized it to `FALSE` for new saves.
+- Added the `Event Tickets` options-menu row after `Infinite TMs` and before `Cancel`.
+- Added option strings and approved reward messages.
+- Reused saved event flag `0x1AA` as `FLAG_RECEIVED_ELITE_FOUR_TICKET_REWARDS`.
+- Added `MarkWallaceEventTicketRewardPending` and called it from the Wallace Hall of Fame script before `GameClear`.
+- Consumed the Wallace-only pending marker before `TrySavingData(SAVE_HALL_OF_FAME)`, so successful item and flag changes are included in the automatic post-Wallace save.
+- Added all-or-nothing missing-ticket capacity checks and added only missing `ITEM_AURORA_TICKET`, `ITEM_MYSTIC_TICKET`, `ITEM_EON_TICKET`, and `ITEM_OLD_SEA_MAP`.
+- Set the matching ship destination flags on successful reward.
+
+## Test Summary
+
+- `make -j4` after setting storage/options-menu changes: passed.
+- `make -j4` after Wallace reward hook changes: passed.
+- Final `make -j4`: passed.
+- Follow-up `make -j4` after manual-test timing fix: passed.
+  - Final memory output: EWRAM `249708 B / 256 KB`, IWRAM `30892 B / 32 KB`, ROM `14929764 B / 32 MB`.
+- `git diff --check`: passed.
+- Targeted reference scan confirmed the setting storage/default/menu flow, Wallace-only marker, pre-save reward check, reward claim flag, reward item checks, and ship destination flags are present.
+- User manually tested the corrected Wallace flow and approved it.
+
+## User Manual Testing Approval Note
+
+- User confirmation: "tested, working properly"
+
 ## Feature: TMs are not spent
 
 ## Approved Branch

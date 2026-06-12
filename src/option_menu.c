@@ -25,7 +25,8 @@
 #define tWindowFrameType data[6]
 #define tModernExpShare data[7]
 #define tInfiniteTMs data[8]
-#define tMenuScrollOffset data[9]
+#define tEventTickets data[9]
+#define tMenuScrollOffset data[10]
 
 #define OPTIONS_MENU_VISIBLE_ITEMS 7
 #define OPTIONS_MENU_ROW_HEIGHT 16
@@ -40,6 +41,7 @@ enum
     MENUITEM_FRAMETYPE,
     MENUITEM_MODERNEXPSHARE,
     MENUITEM_INFINITETMS,
+    MENUITEM_EVENTTICKETS,
     MENUITEM_CANCEL,
     MENUITEM_COUNT,
 };
@@ -72,6 +74,8 @@ static u8 ModernExpShare_ProcessInput(u8 selection);
 static void ModernExpShare_DrawChoices(u8 selection, u8 y);
 static u8 InfiniteTMs_ProcessInput(u8 selection);
 static void InfiniteTMs_DrawChoices(u8 selection, u8 y);
+static u8 EventTickets_ProcessInput(u8 selection);
+static void EventTickets_DrawChoices(u8 selection, u8 y);
 static void DrawHeaderText(void);
 static void DrawOptionMenuPage(u8 taskId);
 static void DrawBgWindowFrames(void);
@@ -92,6 +96,7 @@ static const u8 *const sOptionMenuItemsNames[MENUITEM_COUNT] =
     [MENUITEM_FRAMETYPE]   = gText_Frame,
     [MENUITEM_MODERNEXPSHARE] = gText_ModernExpShare,
     [MENUITEM_INFINITETMS] = gText_InfiniteTMs,
+    [MENUITEM_EVENTTICKETS] = gText_EventTickets,
     [MENUITEM_CANCEL]      = gText_OptionMenuCancel,
 };
 
@@ -243,6 +248,7 @@ void CB2_InitOptionMenu(void)
         gTasks[taskId].tWindowFrameType = gSaveBlock2Ptr->optionsWindowFrameType;
         gTasks[taskId].tModernExpShare = gSaveBlock2Ptr->optionsModernExpShare;
         gTasks[taskId].tInfiniteTMs = gSaveBlock2Ptr->optionsInfiniteTMs;
+        gTasks[taskId].tEventTickets = gSaveBlock2Ptr->optionsEventTickets;
         gTasks[taskId].tMenuScrollOffset = 0;
 
         DrawOptionMenuPage(taskId);
@@ -337,6 +343,9 @@ static void Task_OptionMenuProcessInput(u8 taskId)
         case MENUITEM_INFINITETMS:
             gTasks[taskId].tInfiniteTMs = InfiniteTMs_ProcessInput(gTasks[taskId].tInfiniteTMs);
             break;
+        case MENUITEM_EVENTTICKETS:
+            gTasks[taskId].tEventTickets = EventTickets_ProcessInput(gTasks[taskId].tEventTickets);
+            break;
         default:
             return;
         }
@@ -360,6 +369,7 @@ static void Task_OptionMenuSave(u8 taskId)
     gSaveBlock2Ptr->optionsWindowFrameType = gTasks[taskId].tWindowFrameType;
     gSaveBlock2Ptr->optionsModernExpShare = gTasks[taskId].tModernExpShare;
     gSaveBlock2Ptr->optionsInfiniteTMs = gTasks[taskId].tInfiniteTMs;
+    gSaveBlock2Ptr->optionsEventTickets = gTasks[taskId].tEventTickets;
 
     BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
     gTasks[taskId].func = Task_OptionMenuFadeOut;
@@ -677,6 +687,29 @@ static void InfiniteTMs_DrawChoices(u8 selection, u8 y)
     DrawOptionMenuChoice(gText_InfiniteTMsOff, GetStringRightAlignXOffset(FONT_NORMAL, gText_InfiniteTMsOff, 198), y, styles[0]);
 }
 
+static u8 EventTickets_ProcessInput(u8 selection)
+{
+    if (JOY_NEW(DPAD_LEFT | DPAD_RIGHT))
+    {
+        selection ^= 1;
+        sArrowPressed = TRUE;
+    }
+
+    return selection;
+}
+
+static void EventTickets_DrawChoices(u8 selection, u8 y)
+{
+    u8 styles[2];
+
+    styles[0] = 0;
+    styles[1] = 0;
+    styles[selection] = 1;
+
+    DrawOptionMenuChoice(gText_EventTicketsOn, 104, y, styles[1]);
+    DrawOptionMenuChoice(gText_EventTicketsOff, GetStringRightAlignXOffset(FONT_NORMAL, gText_EventTicketsOff, 198), y, styles[0]);
+}
+
 static void DrawHeaderText(void)
 {
     FillWindowPixelBuffer(WIN_HEADER, PIXEL_FILL(1));
@@ -725,6 +758,9 @@ static void DrawOptionMenuPage(u8 taskId)
             break;
         case MENUITEM_INFINITETMS:
             InfiniteTMs_DrawChoices(gTasks[taskId].tInfiniteTMs, y);
+            break;
+        case MENUITEM_EVENTTICKETS:
+            EventTickets_DrawChoices(gTasks[taskId].tEventTickets, y);
             break;
         }
     }

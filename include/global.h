@@ -524,7 +524,8 @@ struct SaveBlock2
              u16 regionMapZoom:1; // whether the map is zoomed in
              u16 optionsModernExpShare:1; // modern EXP: KOer 100%, rest 50%; else vanilla
              u16 optionsInfiniteTMs:1; // TMs are not consumed after successful use
-             //u16 padding1:2;
+             u16 optionsEventTickets:1; // awards event tickets after beating Wallace when enabled
+             //u16 padding1:1;
              //u16 padding2;
     /*0x18*/ struct Pokedex pokedex;
     /*0x90*/ u8 filler_90[0x8];
