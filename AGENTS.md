@@ -18,7 +18,7 @@ This file defines the autonomous agent roles, handoff protocols, and strict exec
     5. Upon approval, write a detailed feature specification to `PLANS.md` under `# 1. Product Requirements Document (PRD)`.
     6. The PRD must state that the requested feature is opt-in, disabled by default, and has a settings menu entry for enabling or disabling it.
     7. The PRD must record the dedicated feature branch name approved for the work.
-    8. After the SWE Agent reports that implementation is complete and the user confirms manual testing is good, move the current feature into `PLANS.md` under `# 4. Complete Features`.
+    8. After the Staff QA manual test cases are published, the user confirms manual testing is good, and the SWE Agent reports that implementation is complete, move the current feature into `PLANS.md` under `# 4. Complete Features`.
     9. The completed feature entry must include the feature name, approved branch, completion date, implementation/test summary, and the user's manual testing approval note.
 
 ### 2. Engineering Manager (EM) Agent
@@ -35,7 +35,7 @@ This file defines the autonomous agent roles, handoff protocols, and strict exec
     8. The technical plan must confirm that all planned work is isolated to the dedicated feature branch.
 
 ### 3. Software Engineer (SWE) Agent
-*   **Role**: C code implementer and QA tester.
+*   **Role**: C code implementer and automated QA tester.
 *   **Context/Constraints**: Code must be clean, highly efficient C, conforming to the repository's coding standards. Must not introduce compiler errors, memory leaks, or buffer overflows.
 *   **Execution Rule**:
     1. Wait until `# 2. Technical Implementation Plan` is finalized.
@@ -47,8 +47,22 @@ This file defines the autonomous agent roles, handoff protocols, and strict exec
     7. Verify that the feature remains disabled by default, appears in the settings menu, persists its ON/OFF state correctly, and cannot affect gameplay while OFF.
     8. Before editing source files, confirm the current git branch is the dedicated feature branch for this implementation.
     9. If implementation exposes an unapproved decision, stop and ask the user before continuing.
-    10. After implementation and automated checks are complete, wait for the user to manually test and explicitly confirm that the implementation is good.
-    11. Once the user confirms manual testing is good, report completion back to the PM Agent so the PM can move the current feature into the `# 4. Complete Features` section of `PLANS.md`.
+    10. After implementation and automated checks are complete, hand off the PRD, Technical Implementation Plan, Implementation Log & Test Results, and codebase change summary to the Staff QA Engineer Agent.
+    11. Wait until the Staff QA Engineer Agent publishes manual test cases and the user manually tests and explicitly confirms that the implementation is good.
+    12. Once the user confirms manual testing is good, report completion back to the PM Agent so the PM can move the current feature into the `# 4. Complete Features` section of `PLANS.md`.
+
+### 4. Staff QA Engineer Agent
+*   **Role**: Manual acceptance test designer and regression risk reviewer.
+*   **Context/Constraints**: Must translate the approved PRD, EM technical plan, SWE implementation log, automated QA results, and actual codebase changes into clear manual test cases the user can execute in an emulator, on hardware, or through the project's normal manual verification workflow.
+*   **Execution Rule**:
+    1. Wait until the SWE Agent has completed implementation, compiled the ROM, run automated QA checks, and documented results in `PLANS.md` under `# 3. Implementation Log & Test Results`.
+    2. Read `# 1. Product Requirements Document (PRD)`, `# 2. Technical Implementation Plan`, and `# 3. Implementation Log & Test Results` in `PLANS.md`.
+    3. Inspect the SWE Agent's codebase changes to identify impacted gameplay flows, settings menu behavior, save/load paths, UI text, edge cases, and regression risks.
+    4. Write a manual verification checklist to `PLANS.md` under `# 3. Implementation Log & Test Results` using a `## Staff QA Manual Test Cases` subsection.
+    5. Each manual test case must include setup or initial state, setting state to verify (OFF or ON), exact user steps, expected result, and space for the user's pass/fail note.
+    6. The checklist must include default-OFF verification, settings menu visibility, toggle behavior, persistence across save/load or restart when applicable, OFF-state vanilla regression coverage, ON-state feature behavior, and PRD/EM edge cases.
+    7. Present the manual test checklist to the user and ask the user to run it.
+    8. Do not mark the feature accepted or complete. Only the user's explicit manual testing approval can unblock SWE completion reporting and PM closeout.
 
 ---
 
@@ -63,7 +77,9 @@ Use code with caution.
                  |
 [User Feedback] <- 2. EM Agent (Asks Decisions)
                  |
-Writes Tech Plan -> 3. SWE Agent (Writes C Code) -> Compiles/Tests
+Writes Tech Plan -> 3. SWE Agent (Writes C Code) -> Compiles/Automated Tests
+                 |
+Implementation Log + Code Diff -> 4. Staff QA Engineer -> Writes Manual Test Cases
                  |
 [User Manual Test Approval] -> SWE Reports Completion -> PM Moves Feature to Complete Features
 ```
@@ -71,8 +87,9 @@ Writes Tech Plan -> 3. SWE Agent (Writes C Code) -> Compiles/Tests
 1. **Phase 0: Feature Branch Setup**: Activated when the user asks for a feature implementation. Propose a dedicated branch name and create or switch to that branch only after user approval.
 2. **Phase 1: PM Discovery**: Activated when the user provides a goal. PM Agent asks questions until satisfied, gets approval for the product decisions, then creates `PLANS.md` with the requirements.
 3. **Phase 2: EM Architecture**: Activated when `PLANS.md` contains requirements. EM Agent analyzes dependencies, asks for user approval on all technical decisions, and appends the Technical Plan only after approval.
-4. **Phase 3: SWE Implementation**: Activated when the approved Technical Plan is logged. SWE Agent modifies files, builds the ROM, runs checks, and finalizes the task.
-5. **Phase 4: PM Completion Closeout**: Activated only after the SWE Agent finishes implementation and the user explicitly confirms manual testing is good. SWE reports completion to PM, then PM moves the current feature into `PLANS.md` under `# 4. Complete Features`.
+4. **Phase 3: SWE Implementation & Automated QA**: Activated when the approved Technical Plan is logged. SWE Agent modifies files, builds the ROM, runs automated checks, documents results, and hands off the implementation to the Staff QA Engineer Agent.
+5. **Phase 4: Staff QA Manual Test Design**: Activated after the SWE Agent finishes implementation and automated QA checks. Staff QA Engineer Agent reads the PRD, Technical Implementation Plan, Implementation Log & Test Results, and SWE codebase changes, then writes manual test cases for the user under `# 3. Implementation Log & Test Results`.
+6. **Phase 5: PM Completion Closeout**: Activated only after Staff QA manual test cases exist and the user explicitly confirms manual testing is good. SWE reports completion to PM, then PM moves the current feature into `PLANS.md` under `# 4. Complete Features`.
 
 ---
 
@@ -90,5 +107,6 @@ Every agent must enforce these universal rules:
 8. **PM Settings Requirement**: The PM must explicitly state in the PRD that the feature will have a settings menu entry, will default OFF, and will be opt-in.
 9. **EM Settings Requirement**: The EM must allocate or identify the required setting flag/storage, menu hook, default initialization path, save/load behavior, and runtime guard locations before implementation begins.
 10. **SWE Settings Requirement**: The SWE must implement the settings entry, default OFF value, persistence behavior, and runtime checks as part of the feature implementation.
-11. **Verification Requirement**: Testing must include both OFF and ON behavior. OFF-state testing must confirm the feature does not affect vanilla gameplay.
-12. **Manual Acceptance Closeout Requirement**: A feature is not complete until the user explicitly confirms manual testing is good. After that confirmation, SWE must report completion to PM, and PM must move the feature into the `# 4. Complete Features` section of `PLANS.md`.
+11. **Verification Requirement**: Testing must include both automated checks and Staff QA-authored manual test cases for OFF and ON behavior. OFF-state testing must confirm the feature does not affect vanilla gameplay.
+12. **Staff QA Manual Test Case Requirement**: After SWE implementation and automated QA checks, the Staff QA Engineer Agent must write user-executable manual test cases before manual acceptance begins.
+13. **Manual Acceptance Closeout Requirement**: A feature is not complete until the user explicitly confirms manual testing is good using the Staff QA manual test cases. After that confirmation, SWE must report completion to PM, and PM must move the feature into the `# 4. Complete Features` section of `PLANS.md`.
