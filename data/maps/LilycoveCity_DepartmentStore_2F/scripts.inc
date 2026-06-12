@@ -43,7 +43,16 @@ LilycoveCity_DepartmentStore_2F_EventScript_ClerkRight::
 	faceplayer
 	message gText_HowMayIServeYou
 	waitmessage
+	special SetLilycoveDeptStore2FRightClerkShopContext
+	special IsBuyableStonesEnabled
+	goto_if_eq VAR_RESULT, TRUE, LilycoveCity_DepartmentStore_2F_EventScript_ClerkRightBuyableStones
 	pokemart LilycoveCity_DepartmentStore_2F_Pokemart2
+	msgbox gText_PleaseComeAgain, MSGBOX_DEFAULT
+	release
+	end
+
+LilycoveCity_DepartmentStore_2F_EventScript_ClerkRightBuyableStones::
+	pokemart LilycoveCity_DepartmentStore_2F_Pokemart2_BuyableStones
 	msgbox gText_PleaseComeAgain, MSGBOX_DEFAULT
 	release
 	end
@@ -62,6 +71,26 @@ LilycoveCity_DepartmentStore_2F_Pokemart2:
 	.2byte ITEM_MECH_MAIL
 	pokemartlistend
 
+	.align 2
+LilycoveCity_DepartmentStore_2F_Pokemart2_BuyableStones:
+	.2byte ITEM_POTION
+	.2byte ITEM_SUPER_POTION
+	.2byte ITEM_HYPER_POTION
+	.2byte ITEM_MAX_POTION
+	.2byte ITEM_REVIVE
+	.2byte ITEM_REPEL
+	.2byte ITEM_SUPER_REPEL
+	.2byte ITEM_MAX_REPEL
+	.2byte ITEM_WAVE_MAIL
+	.2byte ITEM_MECH_MAIL
+	.2byte ITEM_SUN_STONE
+	.2byte ITEM_MOON_STONE
+	.2byte ITEM_FIRE_STONE
+	.2byte ITEM_THUNDER_STONE
+	.2byte ITEM_WATER_STONE
+	.2byte ITEM_LEAF_STONE
+	pokemartlistend
+
 LilycoveCity_DepartmentStore_2F_Text_LearnToUseItemsProperly:
 	.string "Learn to use items properly.\n"
 	.string "That's basic, really.$"
@@ -73,4 +102,3 @@ LilycoveCity_DepartmentStore_2F_Text_GoodGiftForHusband:
 LilycoveCity_DepartmentStore_2F_Text_StockUpOnItems:
 	.string "I'm leaving on a long journey soon.\n"
 	.string "I need to stock up on items.$"
-

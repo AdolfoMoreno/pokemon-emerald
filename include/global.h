@@ -525,7 +525,7 @@ struct SaveBlock2
              u16 optionsModernExpShare:1; // modern EXP: KOer 100%, rest 50%; else vanilla
              u16 optionsInfiniteTMs:1; // TMs are not consumed after successful use
              u16 optionsEventTickets:1; // awards event tickets after beating Wallace when enabled
-             //u16 padding1:1;
+             u16 optionsBuyableStones:1; // adds evolution stones to Lilycove Dept Store 2F Right Clerk
              //u16 padding2;
     /*0x18*/ struct Pokedex pokedex;
     /*0x90*/ u8 filler_90[0x8];

@@ -44,6 +44,7 @@
 
 #define MAX_ITEMS_SHOWN 8
 #define SHOP_MENU_PALETTE_ID 12
+#define LILYCOVE_DEPT_STORE_2F_RIGHT_CLERK_MOON_STONE_PRICE 2100
 
 enum {
     WIN_BUY_SELL_QUIT,
@@ -89,6 +90,7 @@ struct MartInfo
     u16 itemCount;
     u8 windowId;
     u8 martType;
+    bool8 isLilycoveDeptStore2FRightClerk;
 };
 
 struct ShopData
@@ -110,6 +112,7 @@ static EWRAM_DATA struct ShopData *sShopData = NULL;
 static EWRAM_DATA struct ListMenuItem *sListMenuItems = NULL;
 static EWRAM_DATA u8 (*sItemNames)[ITEM_NAME_LENGTH + 2] = {0};
 static EWRAM_DATA u8 sPurchaseHistoryId = 0;
+static EWRAM_DATA bool8 sNextShopIsLilycoveDeptStore2FRightClerk = FALSE;
 EWRAM_DATA struct ItemSlot gMartPurchaseHistory[SMARTSHOPPER_NUM_ITEMS] = {0};
 
 static void Task_ShopMenu(u8 taskId);
@@ -130,6 +133,7 @@ static void BuyMenuSetListEntry(struct ListMenuItem *, u16, u8 *);
 static void BuyMenuAddItemIcon(u16, u8);
 static void BuyMenuRemoveItemIcon(u16, u8);
 static void BuyMenuPrint(u8 windowId, const u8 *text, u8 x, u8 y, s8 speed, u8 colorSet);
+static u16 GetShopItemPrice(u16 itemId);
 static void BuyMenuDrawMapGraphics(void);
 static void BuyMenuCopyMenuBgToBg1TilemapBuffer(void);
 static void BuyMenuCollectObjectEventData(void);
@@ -627,7 +631,7 @@ static void BuyMenuPrintPriceInList(u8 windowId, u32 itemId, u8 y)
         {
             ConvertIntToDecimalStringN(
                 gStringVar1,
-                GetItemPrice(itemId) >> IsPokeNewsActive(POKENEWS_SLATEPORT),
+                GetShopItemPrice(itemId) >> IsPokeNewsActive(POKENEWS_SLATEPORT),
                 STR_CONV_MODE_LEFT_ALIGN,
                 5);
         }
@@ -986,7 +990,7 @@ static void Task_BuyMenu(u8 taskId)
             BuyMenuPrintCursor(tListTaskId, COLORID_GRAY_CURSOR);
 
             if (sMartInfo.martType == MART_TYPE_NORMAL)
-                sShopData->totalCost = (GetItemPrice(itemId) >> IsPokeNewsActive(POKENEWS_SLATEPORT));
+                sShopData->totalCost = (GetShopItemPrice(itemId) >> IsPokeNewsActive(POKENEWS_SLATEPORT));
             else
                 sShopData->totalCost = gDecorations[itemId].price;
 
@@ -1059,7 +1063,7 @@ static void Task_BuyHowManyDialogueHandleInput(u8 taskId)
 
     if (AdjustQuantityAccordingToDPadInput(&tItemCount, sShopData->maxQuantity) == TRUE)
     {
-        sShopData->totalCost = (GetItemPrice(tItemId) >> IsPokeNewsActive(POKENEWS_SLATEPORT)) * tItemCount;
+        sShopData->totalCost = (GetShopItemPrice(tItemId) >> IsPokeNewsActive(POKENEWS_SLATEPORT)) * tItemCount;
         BuyMenuPrintItemQuantityAndPrice(taskId);
     }
     else
@@ -1246,9 +1250,24 @@ static void RecordItemPurchase(u8 taskId)
 #undef tCallbackHi
 #undef tCallbackLo
 
+void SetLilycoveDeptStore2FRightClerkShopContext(void)
+{
+    sNextShopIsLilycoveDeptStore2FRightClerk = TRUE;
+}
+
+static u16 GetShopItemPrice(u16 itemId)
+{
+    if (sMartInfo.isLilycoveDeptStore2FRightClerk && itemId == ITEM_MOON_STONE)
+        return LILYCOVE_DEPT_STORE_2F_RIGHT_CLERK_MOON_STONE_PRICE;
+
+    return GetItemPrice(itemId);
+}
+
 void CreatePokemartMenu(const u16 *itemsForSale)
 {
     CreateShopMenu(MART_TYPE_NORMAL);
+    sMartInfo.isLilycoveDeptStore2FRightClerk = sNextShopIsLilycoveDeptStore2FRightClerk;
+    sNextShopIsLilycoveDeptStore2FRightClerk = FALSE;
     SetShopItemsForSale(itemsForSale);
     ClearItemPurchases();
     SetShopMenuCallback(ScriptContext_Enable);
@@ -1257,6 +1276,8 @@ void CreatePokemartMenu(const u16 *itemsForSale)
 void CreateDecorationShop1Menu(const u16 *itemsForSale)
 {
     CreateShopMenu(MART_TYPE_DECOR);
+    sMartInfo.isLilycoveDeptStore2FRightClerk = FALSE;
+    sNextShopIsLilycoveDeptStore2FRightClerk = FALSE;
     SetShopItemsForSale(itemsForSale);
     SetShopMenuCallback(ScriptContext_Enable);
 }
@@ -1264,6 +1285,8 @@ void CreateDecorationShop1Menu(const u16 *itemsForSale)
 void CreateDecorationShop2Menu(const u16 *itemsForSale)
 {
     CreateShopMenu(MART_TYPE_DECOR2);
+    sMartInfo.isLilycoveDeptStore2FRightClerk = FALSE;
+    sNextShopIsLilycoveDeptStore2FRightClerk = FALSE;
     SetShopItemsForSale(itemsForSale);
     SetShopMenuCallback(ScriptContext_Enable);
 }
