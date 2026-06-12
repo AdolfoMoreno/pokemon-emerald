@@ -12,6 +12,45 @@ No active feature in SWE Implementation.
 
 # 4. Complete Features
 
+## Feature: Bag Capacity Investigation
+
+## Approved Branch
+
+- Dedicated feature branch: `feature/expand-bag-capacity`
+- Base branch: `master`
+
+## Completion Date
+
+- June 13, 2026
+
+## Product Summary
+
+- Investigated current Bag pocket capacity limits in this hack.
+- Scope was Bag pockets only; PC item storage and unrelated inventory systems were out of scope except where relevant to save/layout risk.
+- No implementation was approved or performed.
+- The user explicitly noted that a possible Bag capacity implementation would not require an options menu entry.
+
+## Investigation Summary
+
+- Current Bag limits are Items `30`, Key Items `30`, Poke Balls `16`, TMs/HMs `64`, and Berries `46`.
+- The main useful pressure is Items and Key Items; Poke Balls, TMs/HMs, and Berries already have enough slots for currently defined item-table entries.
+- Direct Bag expansion uses `SaveBlock1` space because the Bag arrays live directly in `struct SaveBlock1`.
+- Current `SaveBlock1` headroom is `120` bytes, or at most `30` total direct extra Bag slots across all pockets.
+- A direct `+5` Items-only expansion would use `20` bytes of `SaveBlock1` and leave `100` bytes, but would still be unsafe for existing saves without migration or extension storage.
+- PC Pokemon box storage is separate fixed save storage and does not reduce Bag expansion headroom.
+- A future ON/OFF setting would fit in existing `SaveBlock2` option padding and would not consume Bag/`SaveBlock1` capacity.
+- Full investigation report: `docs/bag-capacity-investigation.md`.
+
+## Test Summary
+
+- `make -j4` during investigation: passed.
+- `git diff --check`: passed.
+- No source code changes were made.
+
+## User Closeout Note
+
+- User chose not to move forward with the feature due to the implementation/save-layout impact discovered during investigation.
+
 ## Feature: Bag only HMs
 
 ## Approved Branch
