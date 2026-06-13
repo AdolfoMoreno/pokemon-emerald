@@ -12,6 +12,55 @@ No active feature in SWE Implementation.
 
 # 4. Complete Features
 
+## Feature: Easy Evolutions
+
+## Approved Branch
+
+- Dedicated feature branch: `feature/no-trade-level-stone-evolutions`
+- Base branch: `master`
+
+## Completion Date
+
+- June 13, 2026
+
+## Product Summary
+
+- Added an opt-in settings menu entry labeled `Easy Evolutions`.
+- The setting offers `ON` and `OFF` values and defaults to `OFF`.
+- With the setting `OFF`, original vanilla Emerald evolution behavior is preserved.
+- With the setting `ON`, approved trade and special non-stone evolution requirements are replaced with level-up or Evolution Stone requirements.
+- Existing level-up evolutions remain level-up evolutions, and existing Evolution Stone evolutions remain Evolution Stone evolutions.
+- Prior project evolution changes are folded into `Easy Evolutions` and apply only while the setting is `ON`.
+- Scope is limited to existing Emerald National Dex evolution data.
+- The feature changes evolution requirements only; it does not change Evolution Stone availability, shops, routes, rewards, item prices, item descriptions, or item distribution.
+
+## Implementation Summary
+
+- Stored the option in `SaveBlock2` as `optionsEasyEvolutions` using existing options padding and initialized it to `FALSE` for new saves.
+- Added `Easy Evolutions` option-menu strings, task storage, row placement after `Bag only HMs`, load/save behavior, and ON/OFF input/drawing.
+- Restored the main `gEvolutionTable` rows for Kadabra, Machoke, Graveler, Haunter, Seadra, Scyther, and Porygon to true vanilla trade/trade-item behavior.
+- Added a sparse Easy override table for approved ON-state evolution changes.
+- Routed `GetEvolutionTargetSpecies` through a guarded row selector so Easy behavior applies only when `optionsEasyEvolutions` is enabled.
+- Preserved Everstone behavior.
+- Preserved unchanged split lines for Gloom, Tyrogue, Wurmple, and Nincada.
+- Implemented approved split decisions for Poliwhirl, Slowpoke, Eevee, and Clamperl.
+- Full investigation report: `docs/easy-evolutions-investigation.md`.
+
+## Test Summary
+
+- `make -j4` after settings/menu/string changes: passed.
+- `make -j4` after evolution table restoration and runtime guard changes: passed.
+- Final `make -j4`: passed.
+  - Final memory output: EWRAM `249716 B / 256 KB`, IWRAM `30892 B / 32 KB`, ROM `14929764 B / 32 MB`.
+- `git diff --check`: passed.
+- Targeted verification script: passed `43` checks.
+- Staff QA manual test cases were published under `# 3. Implementation Log & Test Results`.
+- User manually tested the feature and approved it.
+
+## User Manual Testing Approval Note
+
+- User confirmation: "tested and approved"
+
 ## Feature: Bag Capacity Investigation
 
 ## Approved Branch
