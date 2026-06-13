@@ -332,6 +332,9 @@ extern const u8 gText_BuyableStonesOff[];
 extern const u8 gText_BagOnlyHMs[];
 extern const u8 gText_BagOnlyHMsOn[];
 extern const u8 gText_BagOnlyHMsOff[];
+extern const u8 gText_EasyEvolutions[];
+extern const u8 gText_EasyEvolutionsOn[];
+extern const u8 gText_EasyEvolutionsOff[];
 extern const u8 gText_EventTicketsAddedToBag[];
 extern const u8 gText_EventTicketsBagTooFull[];
 

@@ -28,7 +28,8 @@
 #define tEventTickets data[9]
 #define tBuyableStones data[10]
 #define tBagOnlyHMs data[11]
-#define tMenuScrollOffset data[12]
+#define tEasyEvolutions data[12]
+#define tMenuScrollOffset data[13]
 
 #define OPTIONS_MENU_VISIBLE_ITEMS 7
 #define OPTIONS_MENU_ROW_HEIGHT 16
@@ -46,6 +47,7 @@ enum
     MENUITEM_EVENTTICKETS,
     MENUITEM_BUYABLESTONES,
     MENUITEM_BAGONLYHMS,
+    MENUITEM_EASYEVOLUTIONS,
     MENUITEM_CANCEL,
     MENUITEM_COUNT,
 };
@@ -84,6 +86,8 @@ static u8 BuyableStones_ProcessInput(u8 selection);
 static void BuyableStones_DrawChoices(u8 selection, u8 y);
 static u8 BagOnlyHMs_ProcessInput(u8 selection);
 static void BagOnlyHMs_DrawChoices(u8 selection, u8 y);
+static u8 EasyEvolutions_ProcessInput(u8 selection);
+static void EasyEvolutions_DrawChoices(u8 selection, u8 y);
 static void DrawHeaderText(void);
 static void DrawOptionMenuPage(u8 taskId);
 static void DrawBgWindowFrames(void);
@@ -107,6 +111,7 @@ static const u8 *const sOptionMenuItemsNames[MENUITEM_COUNT] =
     [MENUITEM_EVENTTICKETS] = gText_EventTickets,
     [MENUITEM_BUYABLESTONES] = gText_BuyableStones,
     [MENUITEM_BAGONLYHMS] = gText_BagOnlyHMs,
+    [MENUITEM_EASYEVOLUTIONS] = gText_EasyEvolutions,
     [MENUITEM_CANCEL]      = gText_OptionMenuCancel,
 };
 
@@ -261,6 +266,7 @@ void CB2_InitOptionMenu(void)
         gTasks[taskId].tEventTickets = gSaveBlock2Ptr->optionsEventTickets;
         gTasks[taskId].tBuyableStones = gSaveBlock2Ptr->optionsBuyableStones;
         gTasks[taskId].tBagOnlyHMs = gSaveBlock2Ptr->optionsBagOnlyHMs;
+        gTasks[taskId].tEasyEvolutions = gSaveBlock2Ptr->optionsEasyEvolutions;
         gTasks[taskId].tMenuScrollOffset = 0;
 
         DrawOptionMenuPage(taskId);
@@ -364,6 +370,9 @@ static void Task_OptionMenuProcessInput(u8 taskId)
         case MENUITEM_BAGONLYHMS:
             gTasks[taskId].tBagOnlyHMs = BagOnlyHMs_ProcessInput(gTasks[taskId].tBagOnlyHMs);
             break;
+        case MENUITEM_EASYEVOLUTIONS:
+            gTasks[taskId].tEasyEvolutions = EasyEvolutions_ProcessInput(gTasks[taskId].tEasyEvolutions);
+            break;
         default:
             return;
         }
@@ -390,6 +399,7 @@ static void Task_OptionMenuSave(u8 taskId)
     gSaveBlock2Ptr->optionsEventTickets = gTasks[taskId].tEventTickets;
     gSaveBlock2Ptr->optionsBuyableStones = gTasks[taskId].tBuyableStones;
     gSaveBlock2Ptr->optionsBagOnlyHMs = gTasks[taskId].tBagOnlyHMs;
+    gSaveBlock2Ptr->optionsEasyEvolutions = gTasks[taskId].tEasyEvolutions;
 
     BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
     gTasks[taskId].func = Task_OptionMenuFadeOut;
@@ -776,6 +786,29 @@ static void BagOnlyHMs_DrawChoices(u8 selection, u8 y)
     DrawOptionMenuChoice(gText_BagOnlyHMsOff, GetStringRightAlignXOffset(FONT_NORMAL, gText_BagOnlyHMsOff, 198), y, styles[0]);
 }
 
+static u8 EasyEvolutions_ProcessInput(u8 selection)
+{
+    if (JOY_NEW(DPAD_LEFT | DPAD_RIGHT))
+    {
+        selection ^= 1;
+        sArrowPressed = TRUE;
+    }
+
+    return selection;
+}
+
+static void EasyEvolutions_DrawChoices(u8 selection, u8 y)
+{
+    u8 styles[2];
+
+    styles[0] = 0;
+    styles[1] = 0;
+    styles[selection] = 1;
+
+    DrawOptionMenuChoice(gText_EasyEvolutionsOn, 104, y, styles[1]);
+    DrawOptionMenuChoice(gText_EasyEvolutionsOff, GetStringRightAlignXOffset(FONT_NORMAL, gText_EasyEvolutionsOff, 198), y, styles[0]);
+}
+
 static void DrawHeaderText(void)
 {
     FillWindowPixelBuffer(WIN_HEADER, PIXEL_FILL(1));
@@ -833,6 +866,9 @@ static void DrawOptionMenuPage(u8 taskId)
             break;
         case MENUITEM_BAGONLYHMS:
             BagOnlyHMs_DrawChoices(gTasks[taskId].tBagOnlyHMs, y);
+            break;
+        case MENUITEM_EASYEVOLUTIONS:
+            EasyEvolutions_DrawChoices(gTasks[taskId].tEasyEvolutions, y);
             break;
         }
     }
